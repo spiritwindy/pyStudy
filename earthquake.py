@@ -36,20 +36,28 @@ df["Interval"] = df["Date"].diff().dt.days
 df = df.dropna()
 
 # 4. 训练 ARIMA 模型
-model = ARIMA(df["Interval"], order=(1,1,1))  # 选择 ARIMA(1,1,1) 作为示例
+model = ARIMA(df["Interval"], order=(1, 1, 1))  # 选择 ARIMA(1,1,1) 作为示例
 model_fit = model.fit()
 
-# 5. 预测未来下一个地震的间隔天数
-forecast_days = model_fit.forecast(steps=1).iloc[0]
+# 5. 连续预测未来20次地震的间隔天数
+forecast_values = model_fit.forecast(steps=20)
+
+# 6. 根据预测间隔计算未来20次地震的时间点（累加间隔）
 last_date = df["Date"].iloc[-1]
-predicted_date = last_date + pd.Timedelta(days=int(forecast_days))
+predicted_dates = []
+current_date = last_date
+for interval in forecast_values:
+    current_date = current_date + pd.Timedelta(days=int(round(interval)))
+    predicted_dates.append(current_date)
 
-print(f"预计下次7级以上地震发生的时间: {predicted_date.date()}")
+print("预测未来20次7级以上地震的时间点：")
+for i, date in enumerate(predicted_dates, start=1):
+    print(f"{i}: {date.date()}")
 
-# 6. 可视化历史地震间隔趋势
+# 7. 可视化历史地震间隔趋势和第一个预测点
 plt.figure(figsize=(12, 5))
-plt.plot(df["Date"][1:], df["Interval"], marker="o", label="历史地震间隔")
-plt.axvline(x=predicted_date, color='r', linestyle='--', label=f"预测地震({predicted_date.date()})")
+plt.plot(df["Date"], df["Interval"], marker="o", label="历史地震间隔")
+plt.axvline(x=predicted_dates[0], color='r', linestyle='--', label=f"预测第1次地震({predicted_dates[0].date()})")
 plt.xlabel("年份")
 plt.ylabel("地震间隔（天）")
 plt.title("历史地震间隔趋势与预测")

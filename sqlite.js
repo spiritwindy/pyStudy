@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require("sequelize");
+const { Sequelize, DataTypes, Op } = require("sequelize");
 
 // 连接到内存中的 SQLite 数据库（临时）
 // const sequelize = new Sequelize("sqlite::memory:");
@@ -10,7 +10,7 @@ const sequelize = new Sequelize({
     logging: false // 关闭 SQL 日志（可选）
 });
 
-let earth = sequelize.define("Earthquake", {
+let Earthquake = sequelize.define("Earthquake", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -33,26 +33,45 @@ let earth = sequelize.define("Earthquake", {
         allowNull: false
     }
 }, { timestamps: false,indexes:[{fields:["time"],unique: true}] }); 
-
+// Earthquake.sync();
 async function addData(params) {
-    // await earth.sync({ alter: { drop: false } })
-    // 
-    // {
-    //     magnitude: 5.0,
-    //     time: "2024-01-01",
-    //     latitude: 35.0,
-    //     longitude: 135.0
-    // }
     try {
-        let res = await earth.create(params)
+        let res = await Earthquake.create(params)
         console.log(res.toJSON())  
     } catch (error) {
         console.error("Error adding data:", error.message);
     }
 
-
 }
+
+async function countEarthquakesByYear(minMagnitude = 5) {
+    try {
+        const results = await Earthquake.findAll({
+            attributes: [
+                [Sequelize.fn("strftime", "%Y", Sequelize.col("time")), "year"],
+                [Sequelize.fn("COUNT", "*"), "count"]
+            ],
+            where: {
+                magnitude: {
+                    [Op.gte]: minMagnitude // 过滤 5 级以上地震
+                }
+            },
+            group: ["year"],
+            order: [["year", "ASC"]]
+        });
+
+        results.forEach(result => {
+            const { year, count } = result.dataValues;
+            console.log(`Year: ${year}, Earthquakes: ${count}`);
+        });
+
+        return results.map(result => result.dataValues);
+    } catch (error) {
+        console.error("Error counting earthquakes by year:", error.message);
+    }
+}
+
+// countEarthquakesByYear()
 module.exports = {
     addData
 }
-// addData();

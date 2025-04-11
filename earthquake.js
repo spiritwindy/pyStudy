@@ -20,31 +20,25 @@ async function getData(starttime) {
     }
 
     let features = data.features;
+    let datas = [];
     let earthquakes = features.map(feature => {
-        let d = moment(feature.properties.time).format("YYYY-MM-DD");
-        if (json[d] && json[d].magnitude > feature.properties.mag) {
-            console.log("skip", d, json[d].magnitude, feature.properties.mag);
-            return;
-        }
-        json[d] = {
+        datas.push({
             "magnitude": feature.properties.mag,
-            "time": new Date(feature.properties.time),
+            "time": moment(new Date(feature.properties.time)).format("YYYY-MM-DD HH:mm:ss"),
             "latitude": feature.geometry.coordinates[1],
             "longitude": feature.geometry.coordinates[0]
-        };
+        })
     });
     let proms = []
-    Object.keys(json).forEach(key => {
-        json[key].time = moment(json[key].time).format("YYYY-MM-DD")
-        let p = addData(json[key])
-        proms.push(p)
 
+    datas.forEach(v=>{
+        let p = addData(v)
+        proms.push(p)
     })
     await Promise.all(proms)
-
 }
 async function getAllData() {
-    let starttime = "2004-01-01"
+    let starttime = "1901-01-01"
     let endtime = moment("2025-01-01").format("YYYY-MM-DD")
     while (starttime < endtime) {
         await getData(starttime)

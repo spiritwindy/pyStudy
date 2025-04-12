@@ -73,5 +73,5 @@ async function countEarthquakesByYear(minMagnitude = 5) {
 
 // countEarthquakesByYear()
 module.exports = {
-    addData
+    addData,Earthquake
 }

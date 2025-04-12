@@ -1,7 +1,9 @@
 {
   "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
     "moment": "^2.30.1",
     "sequelize": "^6.37.7",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "tfjs-node-save": "^0.0.2"
   }
 }

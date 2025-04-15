@@ -2,14 +2,14 @@
 
 const CONFIG = {
   SEQ_LENGTH: 24,    // 输入序列长度
-  D_MODEL: 64,       // 模型维度
+  D_MODEL: 4,       // 模型维度
   N_HEADS: 4,        // 注意力头数
   N_LAYERS: 3,       // 编码器层数
   BATCH_SIZE: 32,
   EPOCHS: 40,
   LR: 1e-3,
-  INPUT_DIM: 1,      // 输入特征维度
-  OUTPUT_DIM: 1      // 输出特征维度
+  INPUT_DIM: 4,      // 输入特征维度
+  OUTPUT_DIM: 4      // 输出特征维度
 };
 const tf = require('@tensorflow/tfjs');
 
@@ -36,13 +36,18 @@ class TimeSeriesTransformer {
       .reshape([1, CONFIG.SEQ_LENGTH, 1]);
     const divTerm = tf.exp(tf.range(0, CONFIG.D_MODEL, 2)
       .mul(-Math.log(10000.0) / CONFIG.D_MODEL));
-    return position.mul(divTerm).sin();
+      const posEnc = position
+      .mul(divTerm)
+      .sin()
+      .tile([1, 1, 2]);
+      console.log("posEnc",posEnc.shape)
+      return posEnc;
   }
 
   encode(inputs) {
     const posEnc = this.positionEncoding.slice(
       [0, 0, 0],
-      [1, inputs.shape[1], inputs.shape[2]]
+      [1, inputs.shape[1], inputs.shape[2]] //[32BATCH_SIZE,SEQ_LENGTH,INPUT_DIM]
     );
     return inputs.add(posEnc);
   }

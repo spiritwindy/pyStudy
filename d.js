@@ -46,12 +46,17 @@ async function main() {
 
   // 划分训练集/验证集
   const splitIdx = Math.floor(X.shape[0] * 0.8);
-  const X_train = X.slice([0, 0, 0], [splitIdx, CONFIG.SEQ_LENGTH, 1]);
-  const X_val = X.slice([splitIdx, 0, 0], [-1, CONFIG.SEQ_LENGTH, 1]);
-  console.log(X_val.print(),X_val.shape)
-  const y_train = y.slice([0, 0], [splitIdx, 1]);
-  const y_val = y.slice([splitIdx, 0], [-1, 1]);
+  console.log("X",X.shape)
+  console.log("Y",y.shape)
+  const X_train = X.slice([0, 0, 0], [splitIdx, CONFIG.SEQ_LENGTH, CONFIG.OUTPUT_DIM]);
+  const X_val = X.slice([splitIdx, 0, 0], [-1, CONFIG.SEQ_LENGTH, CONFIG.OUTPUT_DIM]);
+  console.log("X_train",X_train.shape)
+  console.log("X_val",X_val.shape)
 
+  const y_train = y.slice([0, 0], [splitIdx, CONFIG.OUTPUT_DIM]);
+  const y_val = y.slice([splitIdx, 0], [-1, CONFIG.OUTPUT_DIM]);
+  console.log("y_train",y_train.shape)
+  console.log("y_val",y_val.shape)
   // 初始化模型
   const model = new TimeSeriesTransformer();
   const optimizer = train.adam(CONFIG.LR);
@@ -63,8 +68,9 @@ async function main() {
     
     // 分批训练
     for (let i = 0; i <= X_train.shape[0] - CONFIG.BATCH_SIZE; i += CONFIG.BATCH_SIZE) {
-      const batchX = X_train.slice([i, 0, 0], [CONFIG.BATCH_SIZE, CONFIG.SEQ_LENGTH, 1]);
-      const batchY = y_train.slice([i, 0], [CONFIG.BATCH_SIZE, 1]);
+      const batchX = X_train.slice([i, 0, 0], [CONFIG.BATCH_SIZE, CONFIG.SEQ_LENGTH, CONFIG.OUTPUT_DIM]);
+      const batchY = y_train.slice([i, 0], [CONFIG.BATCH_SIZE, CONFIG.OUTPUT_DIM]);
+      console.log("batchX",batchX.shape)
       const loss = optimizer.minimize(() => {
         const pred = model.predict(batchX);
         return lossFn(batchY, pred);

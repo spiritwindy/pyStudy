@@ -2,7 +2,7 @@ import { tensor3d, tensor2d, train, dispose } from '@tensorflow/tfjs';
 import { mkdir, writeFile } from 'fs/promises';
 import { TimeSeriesTransformer, CONFIG } from './TimeSeriesTransformer.js';
 import { fetchEarthquakes } from "./fetchData.js";
-
+CONFIG.OUTPUT_DIM =4;
 // 创建滑动窗口数据集
 // 修改后的createDataset函数
 /**
@@ -16,21 +16,22 @@ import { fetchEarthquakes } from "./fetchData.js";
  * @param {*} seqLength 
  * @returns 
  */
+
 function createDataset(data, seqLength) {
     const X = [];
     const y = [];
     
     for (let i = 0; i < data.length - seqLength; i++) {
       // 每个时间步包装为一个数组，创建二维结构
-      const seq = data.slice(i, i + seqLength).map(val => [val.time]);//val.latitude,val.longitude,val.magnitude
+      const seq = data.slice(i, i + seqLength).map(val => [val.time,val.latitude,val.longitude,val.magnitude]);//val.latitude,val.longitude,val.magnitude
       X.push(seq);  // 现在X是number[][][]
       let val = data[i + seqLength]
-      y.push( [val.time]);
+      y.push( [val.time,val.latitude,val.longitude,val.magnitude]);
     }
     
     return {
       X: tensor3d(X),  // 现在会自动推断形状
-      y: tensor2d(y, [y.length, 1])
+      y: tensor2d(y, [y.length, CONFIG.OUTPUT_DIM])
     };
   }
 

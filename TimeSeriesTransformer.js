@@ -7,7 +7,9 @@ const CONFIG = {
   N_LAYERS: 3,       // 编码器层数
   BATCH_SIZE: 32,
   EPOCHS: 40,
-  LR: 1e-3
+  LR: 1e-3,
+  INPUT_DIM: 1,      // 输入特征维度
+  OUTPUT_DIM: 1      // 输出特征维度
 };
 const tf = require('@tensorflow/tfjs');
 
@@ -20,12 +22,11 @@ class TimeSeriesTransformer {
     );
 
     this.positionEncoding = this.buildPositionEncoding();
-    // this.decoder = tf.layers.dense({units: 1});
     // 让 decoder 变成一个 trainable 层
     this.decoder = tf.sequential({
       layers: [
         tf.layers.dense({ units: 16, activation: 'relu', inputShape: [CONFIG.D_MODEL] }),
-        tf.layers.dense({ units: 1 })  // 输出单个预测值
+        tf.layers.dense({ units: CONFIG.OUTPUT_DIM })  // 输出维度改为 CONFIG.OUTPUT_DIM
       ]
     });
   }
@@ -49,7 +50,6 @@ class TimeSeriesTransformer {
   predict(inputs) {
     let x = this.encode(inputs);
 
-
     // 编码器层堆叠
     for (const layer of this.encoderLayers) {
       const attnOutput = layer.apply([x, x, x]);
@@ -68,4 +68,5 @@ class TimeSeriesTransformer {
     return this.decoder.apply(lastStep);
   }
 }
-module.exports ={ TimeSeriesTransformer,CONFIG }
+
+module.exports = { TimeSeriesTransformer, CONFIG };

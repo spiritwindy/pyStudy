@@ -2,6 +2,7 @@ import { tensor3d, tensor2d, train, dispose } from '@tensorflow/tfjs';
 import { mkdir, writeFile } from 'fs/promises';
 import { TimeSeriesTransformer, CONFIG } from './TimeSeriesTransformer.js';
 import { fetchEarthquakes } from "./fetchData.js";
+import { normalizeTimestamp,denormalizeTimestamp } from "./time.js";
 CONFIG.OUTPUT_DIM =4;
 // 创建滑动窗口数据集
 // 修改后的createDataset函数
@@ -23,10 +24,10 @@ function createDataset(data, seqLength) {
     
     for (let i = 0; i < data.length - seqLength; i++) {
       // 每个时间步包装为一个数组，创建二维结构
-      const seq = data.slice(i, i + seqLength).map(val => [val.time,val.latitude,val.longitude,val.magnitude]);//val.latitude,val.longitude,val.magnitude
+      const seq = data.slice(i, i + seqLength).map(val => [ normalizeTimestamp (val.time),val.latitude,val.longitude,val.magnitude]);//val.latitude,val.longitude,val.magnitude
       X.push(seq);  // 现在X是number[][][]
       let val = data[i + seqLength]
-      y.push( [val.time,val.latitude,val.longitude,val.magnitude]);
+      y.push( [normalizeTimestamp(val.time),val.latitude,val.longitude,val.magnitude]);
     }
     
     return {

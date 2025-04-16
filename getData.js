@@ -1,8 +1,8 @@
 
 const tf = require('@tensorflow/tfjs');
+import _ from "tfjs-node-save"
 
-require("tfjs-node-save");
-
+import { fetchEarthquakes } from "./fetchData.js";
 
 
 function createSequences(data, seqLength = 10) {

@@ -23,9 +23,9 @@ export function normalizeTimestamp(timestamp, minTimestamp = min, maxTimestamp =
  * @returns {number} 原始时间戳（毫秒）
  */
 export function denormalizeTimestamp(normalized, minTimestamp = min, maxTimestamp = max) {
-    if (normalized < 0 || normalized > 1) {
-        throw new Error("归一化值必须在0到1之间");
-    }
+    // if (normalized < 0 || normalized > 1) {
+    //     throw new Error("归一化值必须在0到1之间");
+    // }
     return normalized * (maxTimestamp - minTimestamp) + minTimestamp;
 }
 

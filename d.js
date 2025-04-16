@@ -92,7 +92,11 @@ async function main() {
       `Train Loss: ${(totalLoss/(X_train.shape[0]/CONFIG.BATCH_SIZE)).toFixed(4)} | ` +
       `Val Loss: ${valLoss.toFixed(4)}`
     );
-    
+    const valPredArray = await valPred.array();
+    for(var i=0;i<valPredArray.length;i++){
+      let ele =valPredArray[i]
+      console.log(new Date(denormalizeTimestamp( ele[0])* 1000).toLocaleString() ,ele[1],ele[2],ele[3])
+    }
     dispose(valPred);
   }
 

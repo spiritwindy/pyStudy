@@ -1,4 +1,4 @@
-const {  Op } = require("sequelize");
+const {  Op,fn,col } = require("sequelize");
 const { Earthquake } = require("./sqlite"); // 引入定义的模型
 
 require("tfjs-node-save");
@@ -16,7 +16,7 @@ async function fetchEarthquakes() {
             }
         });
         const data = rows.map(row => ({
-            time: new Date(row.time).getTime() / 1000, // 转成秒
+            time: new Date(row.time).getTime(), // 转成秒
             latitude: row.latitude,
             longitude: row.longitude,
             magnitude: row.magnitude
@@ -27,4 +27,22 @@ async function fetchEarthquakes() {
         console.error("查询失败:", error.message);
     }
 }
-module.exports = { fetchEarthquakes };
+
+async function getRang(params) {
+            // 查询范围
+    const range = await Earthquake.findAll({
+        attributes: [
+            [fn("MIN", col("time")), "minTime"],
+            [fn("MAX", col("time")), "maxTime"],
+            [fn("MIN", col("latitude")), "minLatitude"],
+            [fn("MAX", col("latitude")), "maxLatitude"],
+            [fn("MIN", col("longitude")), "minLongitude"],
+            [fn("MAX", col("longitude")), "maxLongitude"],
+            [fn("MIN", col("magnitude")), "minMagnitude"],
+            [fn("MAX", col("magnitude")), "maxMagnitude"]
+        ]
+    });
+    console.log(range)
+}
+
+module.exports = { fetchEarthquakes,getRang };

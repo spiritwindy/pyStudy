@@ -1,41 +1,49 @@
-let min = new Date("1900-01-01").getTime() / 1000;
-let max = new Date("2100-01-01").getTime() / 1000;
+let min = new Date("1900-01-01").getTime();
+let max = new Date("2100-01-01").getTime();
 
-/**
- * 归一化时间戳
- * @param {number} timestamp - 要归一化的时间戳（毫秒）
- * @param {number} minTimestamp - 范围内的最小时间戳
- * @param {number} maxTimestamp - 范围内的最大时间戳
- * @returns {number} 归一化后的值（在0到1之间）
- */
-export function normalizeTimestamp(timestamp, minTimestamp = min, maxTimestamp = max) {
-    if (maxTimestamp === minTimestamp) {
-        throw new Error("最大时间戳和最小时间戳不能相同");
+// 归一化函数
+export function normalizeValue(value, minValue, maxValue) {
+    if (maxValue === minValue) {
+        throw new Error("最大值和最小值不能相同");
     }
-    return (timestamp - minTimestamp) / (maxTimestamp - minTimestamp);
+    return (value - minValue) / (maxValue - minValue);
 }
 
-/**
- * 反归一化，将归一化值转换回原始时间戳
- * @param {number} normalized - 归一化的值（0到1之间）
- * @param {number} minTimestamp - 范围内的最小时间戳
- * @param {number} maxTimestamp - 范围内的最大时间戳
- * @returns {number} 原始时间戳（毫秒）
- */
-export function denormalizeTimestamp(normalized, minTimestamp = min, maxTimestamp = max) {
-    // if (normalized < 0 || normalized > 1) {
-    //     throw new Error("归一化值必须在0到1之间");
-    // }
-    return normalized * (maxTimestamp - minTimestamp) + minTimestamp;
+// 反归一化函数
+export function denormalizeValue(normalized, minValue, maxValue) {
+    return normalized * (maxValue - minValue) + minValue;
 }
 
-// test();
- function test() {
-    let t = Date.now();
-    let res = normalizeTimestamp(t / 1000);
+const normalizeCase = [
+    { minValue: min, maxValue: max, description: "Time" },
+    { minValue: -90, maxValue: 90, description: "Latitude" },
+    { minValue: -180, maxValue: 180, description: "Longitude" },
+    { minValue: 0, maxValue: 11, description: "Magnitude" }
+];
+// 测试用例
+export function normalizeValues(arr) {
+    let res = new Array(arr.length)
+    for (let index = 0; index < normalizeCase.length; index++) {
+        res[index] = normalizeValue(arr[index], normalizeCase[index].minValue, normalizeCase[index].maxValue)
+    }
+    return res
+}
+// 测试用例
+export function denormalizeValues(arr) {
+    let res = new Array(arr.length)
+    for (let index = 0; index < normalizeCase.length; index++) {
+        res[index] = denormalizeValue(arr[index], normalizeCase[index].minValue, normalizeCase[index].maxValue)
+    }
+    return res
+}
+export function test() {
+    // 调用测试函数
+    const arr = [new Date().getTime(), Math.random() * 90, Math.random() * 180, 5]
+    console.log(arr)
+    let res = normalizeValues(arr);
     console.log(res);
-    console.log(new Date(denormalizeTimestamp(res) * 1000).toLocaleString());
+    let origin = denormalizeValues(res);
+    console.log(origin)
+
+    // export default {normalizeTimestamp,denormalizeTimestamp}
 }
-
-
-// export default {normalizeTimestamp,denormalizeTimestamp}

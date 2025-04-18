@@ -1,6 +1,6 @@
 // Transformer时间序列模型
 
-const CONFIG = {
+export const CONFIG = {
   SEQ_LENGTH: 24,    // 输入序列长度
   D_MODEL: 4,       // 模型维度
   N_HEADS: 4,        // 注意力头数
@@ -11,11 +11,11 @@ const CONFIG = {
   INPUT_DIM: 4,      // 输入特征维度
   OUTPUT_DIM: 4      // 输出特征维度
 };
-const tf = require('@tensorflow/tfjs');
+import tf from '@tensorflow/tfjs';
 
-const { MultiHeadAttention } = require('./multihead');
+import { MultiHeadAttention } from './multihead.js';
 
-class TimeSeriesTransformer {
+export class TimeSeriesTransformer {
   constructor() {
     this.encoderLayers = Array(CONFIG.N_LAYERS).fill().map(() =>
       new MultiHeadAttention(CONFIG.N_HEADS, CONFIG.D_MODEL / CONFIG.N_HEADS)
@@ -74,4 +74,4 @@ class TimeSeriesTransformer {
   }
 }
 
-module.exports = { TimeSeriesTransformer, CONFIG };
+// module.exports = { TimeSeriesTransformer, CONFIG };

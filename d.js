@@ -61,7 +61,33 @@ async function main() {
   // 初始化模型
   const model = new TimeSeriesTransformer();
   const optimizer = train.adam(CONFIG.LR);
+
   const lossFn = (yTrue, yPred) => yTrue.sub(yPred).square().mean();
+
+  /**
+   * 
+   * @param {import('@tensorflow/tfjs').Tensor2D} yTrue 
+   * @param {import('@tensorflow/tfjs').Tensor2D} yPred 
+   * @returns 
+   */
+  async function showDiff(yTrue, yPred) {
+    const predArray = await yPred.array(); // 转为普通数组
+    const yTrueArray = await yTrue.array(); // 转为普通数组
+
+    const valPredArray = predArray;
+    for (var t = 0; t < valPredArray.length; t++) {
+      let ele = valPredArray[t];
+      let eleTrue = yTrueArray[t];
+      let resTure = denormalizeValues(eleTrue);
+      let res = denormalizeValues(ele);
+      console.log("-----------")
+      console.log("pre",new Date(res[0]).toLocaleString(), res[1], res[2], res[3])
+      console.log("actual", new Date(resTure[0]).toLocaleString(), resTure[1], resTure[2], resTure[3])
+      
+    }
+
+    return yTrue.sub(yPred).square().mean();
+  }
 
   console.log('开始训练...');
   for (let epoch = 0; epoch < CONFIG.EPOCHS; epoch++) {
@@ -73,7 +99,9 @@ async function main() {
       const batchY = y_train.slice([i, 0], [CONFIG.BATCH_SIZE, CONFIG.OUTPUT_DIM]);
       // console.log("batchX",batchX.shape)
       const loss = optimizer.minimize(() => {
+       
         const pred = model.predict(batchX);
+        showDiff(batchY, pred)
         return lossFn(batchY, pred);
       }, true);
     

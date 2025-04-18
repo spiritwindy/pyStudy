@@ -1,9 +1,13 @@
 {
   "dependencies": {
-    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs": "^4.21.0",
+    "debughelp": "^1.0.2",
+    "import-meta-resolve": "^4.1.0",
+    "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "sequelize": "^6.37.7",
     "sqlite3": "^5.1.7",
     "tfjs-node-save": "^0.0.2"
-  }
+  },
+  "type": "module"
 }

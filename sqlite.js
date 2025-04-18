@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes, Op } = require("sequelize");
+import { Sequelize, DataTypes, Op } from "sequelize";
 
 // 连接到内存中的 SQLite 数据库（临时）
 // const sequelize = new Sequelize("sqlite::memory:");
@@ -10,7 +10,7 @@ const sequelize = new Sequelize({
     logging: false // 关闭 SQL 日志（可选）
 });
 
-let Earthquake = sequelize.define("Earthquake", {
+export let Earthquake = sequelize.define("Earthquake", {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -34,7 +34,7 @@ let Earthquake = sequelize.define("Earthquake", {
     }
 }, { timestamps: false,indexes:[{fields:["time"],unique: true}] }); 
 // Earthquake.sync();
-async function addData(params) {
+export async function addData(params) {
     try {
         let res = await Earthquake.create(params)
         console.log(res.toJSON())  
@@ -69,9 +69,4 @@ async function countEarthquakesByYear(minMagnitude = 5) {
     } catch (error) {
         console.error("Error counting earthquakes by year:", error.message);
     }
-}
-
-// countEarthquakesByYear()
-module.exports = {
-    addData,Earthquake
 }

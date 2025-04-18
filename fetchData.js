@@ -1,9 +1,9 @@
 const {  Op,fn,col } = require("sequelize");
 const { Earthquake } = require("./sqlite"); // 引入定义的模型
 
-require("tfjs-node-save");
+import "tfjs-node-save";
 
-async function fetchEarthquakes() {
+export async function fetchEarthquakes() {
     try {
         // 查询所有地震数据并按时间排序
         const rows = await Earthquake.findAll({

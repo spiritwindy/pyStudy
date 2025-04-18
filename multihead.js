@@ -1,6 +1,6 @@
-const tf = require('@tensorflow/tfjs');
+import  tf from '@tensorflow/tfjs';
 
-class MultiHeadAttention {
+export class MultiHeadAttention {
     constructor(numHeads, keyDim) {
       this.numHeads = numHeads;
       this.keyDim = keyDim;
@@ -40,5 +40,3 @@ class MultiHeadAttention {
       return tf.concat(heads, -1);
     }
   }
-    
-module.exports = { MultiHeadAttention };

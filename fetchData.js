@@ -1,7 +1,7 @@
-const {  Op,fn,col } = require("sequelize");
-const { Earthquake } = require("./sqlite"); // 引入定义的模型
+import {  Op,fn,col } from "sequelize";
+import { Earthquake } from "./sqlite.js"; // 引入定义的模型
 
-import "tfjs-node-save";
+
 
 export async function fetchEarthquakes() {
     try {
@@ -28,7 +28,7 @@ export async function fetchEarthquakes() {
     }
 }
 
-async function getRang(params) {
+export async function getRang(params) {
             // 查询范围
     const range = await Earthquake.findAll({
         attributes: [
@@ -45,4 +45,3 @@ async function getRang(params) {
     console.log(range)
 }
 
-module.exports = { fetchEarthquakes,getRang };

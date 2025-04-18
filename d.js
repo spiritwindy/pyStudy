@@ -1,9 +1,11 @@
-import { tensor3d, tensor2d, train, dispose } from '@tensorflow/tfjs';
-import { mkdir, writeFile } from 'fs/promises';
+import { tensor3d, tensor2d, train, dispose, tensor ,loadLayersModel} from '@tensorflow/tfjs';
+import { mkdir, writeFile,readFile } from 'fs/promises';
 import { TimeSeriesTransformer, CONFIG } from './TimeSeriesTransformer.js';
 import { fetchEarthquakes } from "./fetchData.js";
 import { normalizeValues,denormalizeValues } from "./time.js";
-CONFIG.OUTPUT_DIM =4;
+CONFIG.OUTPUT_DIM = 4;
+CONFIG.EPOCHS = 3;
+import "tfjs-node-save";
 // 创建滑动窗口数据集
 // 修改后的createDataset函数
 /**
@@ -60,6 +62,7 @@ async function main() {
   console.log("y_val",y_val.shape)
   // 初始化模型
   const model = new TimeSeriesTransformer();
+  await loadModelWeights(model); // 加载模型权重
   const optimizer = train.adam(CONFIG.LR);
 
   const lossFn = (yTrue, yPred) => yTrue.sub(yPred).square().mean();
@@ -101,7 +104,7 @@ async function main() {
       const loss = optimizer.minimize(() => {
        
         const pred = model.predict(batchX);
-        showDiff(batchY, pred)
+        
         return lossFn(batchY, pred);
       }, true);
     
@@ -114,7 +117,7 @@ async function main() {
     valPred.print();
     console.log(valPred.shape)
     const valLoss = lossFn(y_val, valPred).dataSync()[0];
-    
+    await showDiff(y_val, valPred)
     console.log(
       `Epoch ${epoch + 1}/${CONFIG.EPOCHS} | ` +
       `Train Loss: ${(totalLoss/(X_train.shape[0]/CONFIG.BATCH_SIZE)).toFixed(4)} | ` +
@@ -162,19 +165,27 @@ async function predictFuture(model, X_val, steps = 30) {
 
 
 // 模型保存
+/**
+ * 
+ * @param {TimeSeriesTransformer} model 
+ */
 async function saveModel(model) {
-  const modelInfo = {
-    positionEncoding: await model.positionEncoding.array(),
-    decoderWeights: await model.decoder.getWeights()
-  };
+
   await mkdir('model', { recursive: true });
-  await writeFile('model/metadata.json', JSON.stringify({
-    seqLength: CONFIG.SEQ_LENGTH,
-    dModel: CONFIG.D_MODEL
-  }));
-  await writeFile('model/weights.bin', 
-    new Uint8Array(await model.decoder.getWeights()[0].data()));
+
+  let w = await model.decoder.save("file://./model/decoder")
+
 }
+
+/**
+ * 加载模型权重
+ * @param {TimeSeriesTransformer} model
+ */
+async function loadModelWeights(model) {
+  model.decoder = await loadLayersModel("file://./model/decoder/model.json");
+
+}
+
 
 // 执行训练
 main();

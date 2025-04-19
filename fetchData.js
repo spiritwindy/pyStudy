@@ -11,7 +11,7 @@ export async function fetchEarthquakes() {
             order: [["time", "ASC"]],
             where: {
                 magnitude: {
-                    [Op.gte]: 7.5 // 最小震级为8.2
+                    [Op.gte]: 6 // 最小震级为8.2
                 }
             }
         });

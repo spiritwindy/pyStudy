@@ -4,7 +4,7 @@ import { TimeSeriesTransformer, CONFIG } from './TimeSeriesTransformer.js';
 import { fetchEarthquakes } from "./fetchData.js";
 import { normalizeValues,denormalizeValues } from "./time.js";
 CONFIG.OUTPUT_DIM = 4;
-CONFIG.EPOCHS = 3;
+CONFIG.EPOCHS = 20;
 import "tfjs-node-save";
 // 创建滑动窗口数据集
 // 修改后的createDataset函数
@@ -27,7 +27,7 @@ function createDataset(data, seqLength) {
     for (let i = 0; i < data.length - seqLength; i++) {
       // 每个时间步包装为一个数组，创建二维结构
       const seq = data.slice(i, i + seqLength).map(val => normalizeValues([val.time,val.latitude,val.longitude,val.magnitude]));//val.latitude,val.longitude,val.magnitude));//val.latitude,val.longitude,val.magnitude
-      X.push(seq);  // 现在X是number[][][]
+      X.push(seq); // [seqLength,4]
       let val = data[i + seqLength]
       y.push(normalizeValues([val.time,val.latitude,val.longitude,val.magnitude]));
     }
@@ -44,6 +44,7 @@ function createDataset(data, seqLength) {
 async function main() {
   // 生成数据
   const rawData = await fetchEarthquakes(1000);
+  console.log("原始数据:", rawData.length);
   const { X, y } = createDataset(rawData, CONFIG.SEQ_LENGTH);
 
 
@@ -62,7 +63,7 @@ async function main() {
   console.log("y_val",y_val.shape)
   // 初始化模型
   const model = new TimeSeriesTransformer();
-  await loadModelWeights(model); // 加载模型权重
+  // await loadModelWeights(model); // 加载模型权重
   const optimizer = train.adam(CONFIG.LR);
 
   const lossFn = (yTrue, yPred) => yTrue.sub(yPred).square().mean();
@@ -124,6 +125,7 @@ async function main() {
       `Val Loss: ${valLoss.toFixed(4)}`
     );
     dispose(valPred);
+    await saveModel(model);
   }
   console.log("开始连续预测未来的 30 次地震...");
   const futurePredictions = await predictFuture(model, X_val, 30);
@@ -131,7 +133,7 @@ async function main() {
 
 
   // 保存模型
-  await saveModel(model);
+ 
   console.log('模型已保存到 model/');
 }
 

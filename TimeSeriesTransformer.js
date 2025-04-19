@@ -4,7 +4,7 @@ export const CONFIG = {
   SEQ_LENGTH: 24,    // 输入序列长度
   D_MODEL: 4,       // 模型维度
   N_HEADS: 4,        // 注意力头数
-  N_LAYERS: 3,       // 编码器层数
+  N_LAYERS: 10,       // 编码器层数
   BATCH_SIZE: 32,
   EPOCHS: 40,
   LR: 1e-3,
@@ -29,6 +29,7 @@ export class TimeSeriesTransformer {
         tf.layers.dense({ units: CONFIG.OUTPUT_DIM })  // 输出维度改为 CONFIG.OUTPUT_DIM
       ]
     });
+   
   }
 
   buildPositionEncoding() {
@@ -73,5 +74,3 @@ export class TimeSeriesTransformer {
     return this.decoder.apply(lastStep);
   }
 }
-
-// module.exports = { TimeSeriesTransformer, CONFIG };

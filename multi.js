@@ -1,7 +1,7 @@
 // 多头注意力层 MultiHeadAttention 实现示例
 // 继承自 tf.layers.Layer，支持自定义头数、key/value 维度和可选遮罩
 import * as tf from '@tensorflow/tfjs';
-class MultiHeadAttention extends tf.layers.Layer {
+export class MultiHeadAttention extends tf.layers.Layer {
   /**
    * @param {Object} config
    * @param {number} config.numHeads - 注意力头数
@@ -173,50 +173,34 @@ function transformerBlock(dModel, numHeads) {
 
   // 残差连接 + 层归一化
   const add1 = tf.layers.add().apply([input, attention]);
+  console.log("add1", add1.shape);
   const norm1 = tf.layers.layerNormalization().apply(add1);
-
+  console.log("norm1",norm1.shape)
   // 前馈网络
   const dense1 = tf.layers.dense({ units: 4 * dModel, activation: 'relu' }).apply(norm1);
+  console.log("dense1",dense1.shape)
   const dense2 = tf.layers.dense({ units: dModel }).apply(dense1);
-
+  console.log("dense2",dense2.shape)
   // 残差连接 + 层归一化
   const add2 = tf.layers.add().apply([norm1, dense2]);
   const output = tf.layers.layerNormalization().apply(add2);
-
+  console.log("output",output.shape)
   let model = tf.model({ inputs: input, outputs: output });
-  // model.summary()
+  model.summary()
   return model;
 }
 
 // 注册类以支持序列化和模型保存/加载
 tf.serialization.registerClass(MultiHeadAttention);
 
-// ====== 使用示例 ======
-(async () => {
-  const input = tf.input({ shape: [10, 64] });
-  const key = tf.input({ shape: [10, 64] });
-  const val = tf.input({ shape: [10, 64] });
 
-  const attn = new MultiHeadAttention({ numHeads: 8, keyDim: 16 });
-  const output = attn.apply([input, key, val]);
-  const model = tf.model({ inputs: [input, key, val], outputs: output });
-  model.summary();
-
-  // 测试前向
-  const qData = tf.randomNormal([2, 10, 64]);
-  const kData = tf.randomNormal([2, 10, 64]);
-  const vData = tf.randomNormal([2, 10, 64]);
-  const y = model.predict([qData, kData, vData]);
-  // y.print(true);
-  console.log(y.shape);
-})();
 
 function generateTestData(batchSize = 4, seqLen = 10, modelDim = 512, numClasses = 10) {
   const x = tf.randomNormal([batchSize, seqLen, modelDim]);
 
   const labelIndices = tf.randomUniform([batchSize, seqLen], 0, numClasses, 'int32');
   const y = tf.oneHot(labelIndices, numClasses); // shape: [batchSize, seqLen, numClasses]
-
+  
   return { x, y };
 }
 
@@ -252,4 +236,4 @@ async function test1(params) {
 
   console.log('Done training.');
 }
-test1();
+// test1();

@@ -2,9 +2,10 @@ import * as tf from '@tensorflow/tfjs';
 import {MultiHeadAttention} from "./multi.js"
 // ====== 使用示例 ======
 (async () => {
-  const input = tf.input({ shape: [10, 64] });
-  const key = tf.input({ shape: [10, 64] });
-  const val = tf.input({ shape: [10, 64] });
+  const dim = 64;
+  const input = tf.input({ shape: [10, dim] });
+  const key = tf.input({ shape: [10, dim] });
+  const val = tf.input({ shape: [10, dim] });
 
   const attn = new MultiHeadAttention({ numHeads: 8, keyDim: 16 });
   const output = attn.apply([input, key, val]);
@@ -12,9 +13,9 @@ import {MultiHeadAttention} from "./multi.js"
   model.summary();
 
   // 测试前向
-  const qData = tf.randomNormal([2, 10, 64]);
-  const kData = tf.randomNormal([2, 10, 64]);
-  const vData = tf.randomNormal([2, 10, 64]);
+  const qData = tf.randomNormal([2, 10, dim]);
+  const kData = tf.randomNormal([2, 10, dim]);
+  const vData = tf.randomNormal([2, 10, dim]);
   const y = model.predict([qData, kData, vData]);
   // y.print(true);
   console.log(y.shape);

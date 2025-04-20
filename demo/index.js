@@ -42,6 +42,7 @@ function buildTimeSeriesAttentionModel() {
             // 注意: TensorFlow.js 的 multiHeadAttention 默认 Q, K, V 来自同一个输入
         }).apply([x,x,x]); // 输出: [批次大小, 24, dModel]
 
+        console.log(attentionOutput.shape)
         // --- 2b. Add & Norm (残差连接 + 层归一化) ---
         let sublayer1Output = tf.layers.add({ name: `add_norm_1_add_${i + 1}` }).apply([x, attentionOutput]);
         sublayer1Output = tf.layers.layerNormalization({ name: `add_norm_1_norm_${i + 1}` }).apply(sublayer1Output);

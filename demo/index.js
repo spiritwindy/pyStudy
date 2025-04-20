@@ -5,10 +5,7 @@
 // 或者在 Node.js 中:
 // const tf = require('@tensorflow/tfjs-node'); // 或 tfjs-node-gpu
 import * as tf from '@tensorflow/tfjs';
-import { MultiHeadAttention } from "@tensorflow/tfjs-layers/dist/layers/nlp/multihead_attention"
-
-// require("debughelp/importHook")
-// node  --loader=debughelp/importHook.js
+import {MultiHeadAttention} from "../multi.js"
 // --- 模型参数定义 ---
 const sequenceLength = 24; // 输入序列长度 T
 const inputDim = 4;       // 输入特征维度 F_in
@@ -16,7 +13,7 @@ const outputDim = 4;      // 输出特征维度 F_out (预测下一个时间步)
 const numHeads = 4;       // 注意力头的数量 (需要能被 dModel 整除)
 const dModel = 128;       // 模型内部的隐藏维度 (Attention Key/Value/Query 维度) - 设置为 numHeads 的倍数
 const dff = 256;          // 前馈网络 (FFN) 的内部维度
-const numAttentionLayers = 3; // 堆叠的注意力层数
+const numAttentionLayers = 1; // 堆叠的注意力层数
 const dropoutRate = 0.1;  // Dropout 比率，用于正则化
 
 // --- 构建模型 ---
@@ -39,15 +36,11 @@ function buildTimeSeriesAttentionModel() {
     // --- 2. 堆叠的注意力层 ---
     for (let i = 0; i < numAttentionLayers; i++) {
         // --- 2a. 多头自注意力 (Multi-Head Self-Attention) ---
-        const attentionOutput = tf.layers.multiHeadAttention({
-            headCount: numHeads,
-            keyDim: dModel / numHeads, // 每个头的维度
-            valueDim: dModel / numHeads, // 每个头的维度
-            outputShape: [dModel],     // 输出维度需要明确指定或让层推断（这里明确指定）
-            dropout: dropoutRate,      // 注意力权重上的 dropout
+        const attentionOutput = new MultiHeadAttention({
+            numHeads: numHeads, keyDim: dModel / numHeads ,
             name: `multi_head_attention_${i + 1}`
             // 注意: TensorFlow.js 的 multiHeadAttention 默认 Q, K, V 来自同一个输入
-        }).apply(x); // 输出: [批次大小, 24, dModel]
+        }).apply([x,x,x]); // 输出: [批次大小, 24, dModel]
 
         // --- 2b. Add & Norm (残差连接 + 层归一化) ---
         let sublayer1Output = tf.layers.add({ name: `add_norm_1_add_${i + 1}` }).apply([x, attentionOutput]);

@@ -140,7 +140,7 @@ export class MultiHeadAttention extends tf.layers.Layer {
     if (this.useBias) {
       output = tf.add(output, this.oBias.read());
     }
-    return output;
+    return output;//[4,10,512]
   }
 
   getConfig() {
@@ -157,37 +157,6 @@ export class MultiHeadAttention extends tf.layers.Layer {
   static get className() {
     return 'MultiHeadAttention';
   }
-}
-/**
- * 
- * @param {number} dModel 
- * @param {number} numHeads 
- * @returns {tf.Model}
- */
-function transformerBlock(dModel, numHeads) {
-  const input = tf.input({ shape: [null, dModel] }); // 输入序列
-
-  // 多头注意力（Q=K=V=输入）
-  const attention = new MultiHeadAttention({ numHeads, keyDim: dModel / numHeads })
-    .apply([input, input, input]); // 自注意力机制
-
-  // 残差连接 + 层归一化
-  const add1 = tf.layers.add().apply([input, attention]);
-  console.log("add1", add1.shape);
-  const norm1 = tf.layers.layerNormalization().apply(add1);
-  console.log("norm1",norm1.shape)
-  // 前馈网络
-  const dense1 = tf.layers.dense({ units: 4 * dModel, activation: 'relu' }).apply(norm1);
-  console.log("dense1",dense1.shape)
-  const dense2 = tf.layers.dense({ units: dModel }).apply(dense1);
-  console.log("dense2",dense2.shape)
-  // 残差连接 + 层归一化
-  const add2 = tf.layers.add().apply([norm1, dense2]);
-  const output = tf.layers.layerNormalization().apply(add2);
-  console.log("output",output.shape)
-  let model = tf.model({ inputs: input, outputs: output });
-  model.summary()
-  return model;
 }
 
 // 注册类以支持序列化和模型保存/加载

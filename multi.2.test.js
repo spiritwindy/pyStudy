@@ -5,17 +5,37 @@ function generateTestData(batchSize = 4, seqLen = 10, modelDim = 512, numClasses
   
     const labelIndices = tf.randomUniform([batchSize, seqLen], 0, numClasses, 'int32');
     const y = tf.oneHot(labelIndices, numClasses); // shape: [batchSize, seqLen, numClasses]
-    
-    return { x, y };
-  }
   
+    console.log("y", y.shape);
+    return { x, y };
+  } 
+  
+  /**
+   * 
+   * @param {number} dModel 
+   * @param {number} numHeads 
+   * @returns {tf.Model}
+   */
+function transformerBlock(dModel, numHeads) {
+  const input = tf.input({ shape: [null, dModel] }); // 输入序列
+  
+  // // 多头注意力（Q=K=V=输入）
+  const attention = new MultiHeadAttention({ numHeads, keyDim: dModel / numHeads  })
+    .apply([input, input, input]); // 自注意力机制
+  console.log("attention", attention.shape);
+  // let output = tf.layers.dense({ units: 10, activation: 'softmax' }).apply(input) // 示例输出层
+  // console.log("output", output.shape);
+    let model = tf.model({ inputs: input, outputs: attention });
+    model.summary()
+    return model;
+  }
   
   async function test1(params) {
     // 堆叠两个Transformer块
     const model = tf.sequential({
       layers: [
         transformerBlock(512, 8),
-        transformerBlock(512, 8),
+        // transformerBlock(512, 8),
         tf.layers.dense({ units: 10, activation: 'softmax' }) // 示例输出层
       ]
     });

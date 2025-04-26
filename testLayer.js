@@ -9,7 +9,12 @@ class CustomMultiplyLayer extends tf.layers.Layer {
     computeOutputShape(inputShape) {
       return inputShape;
     }
-  
+  /**
+   * 
+   * @param {tf.Tensor[]|tf.Tensor} input 
+   * @param {*} kwargs 
+   * @returns 
+   */
     call(input, kwargs) {
       const x = Array.isArray(input) ? input[0] : input;
       return x.mul(tf.scalar(this.factor));
@@ -17,6 +22,7 @@ class CustomMultiplyLayer extends tf.layers.Layer {
   
     getConfig() {
       const config = super.getConfig();
+      
       Object.assign(config, { factor: this.factor });
       return config;
     }
@@ -25,11 +31,12 @@ class CustomMultiplyLayer extends tf.layers.Layer {
       return 'CustomMultiplyLayer';
     }
 }
+tf.serialization.registerClass(CustomMultiplyLayer);
+
 const layer = new CustomMultiplyLayer({ factor: 3.0 });
 const input = tf.tensor2d([[1, 2], [3, 4]]);
 const output = layer.apply(input);
 output.print();  // [[3,6],[9,12]]
-tf.serialization.registerClass(CustomMultiplyLayer);
   
 const model = tf.sequential();
 model.add(tf.layers.dense({ inputShape: [2], units: 2 }));
@@ -37,5 +44,5 @@ model.add(new CustomMultiplyLayer({ factor: 10 }));
 
 model.summary();
 
-const inputTensor = tf.tensor2d([[0.5, -0.2]]);
+const inputTensor = tf.randomNormal([5,2]);
 model.predict(inputTensor).print();

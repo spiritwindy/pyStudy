@@ -25,7 +25,11 @@ function createModel() {
     // model.add(tf.layers.dropout({ rate: 0.2 }));  // 防止过拟合
     // model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
 
-    // 输出层（假设回归任务）
+    // 输出层（假设回归任务)    
+    model.add(tf.layers.dense({
+        units: 32,          // 隐藏层单元数（根据需求调整）
+        activation: "sigmoid"  // 激活函数
+    }))
     model.add(tf.layers.dense({
         units: 4,          // 输出维度（根据需求调整）
         activation: 'linear' // 回归任务使用线性激活
@@ -88,6 +92,8 @@ async function main() {
         console.log(`Epoch ${epoch + 1}: loss = ${logs.loss}, accuracy = ${JSON.stringify(logs)}`);
         await model.save('file://my-model-e1');
     }
+    
+   
     // 训练模型
     model.fit(X, y, {
         epochs: 50, // 训练50个周期
@@ -101,4 +107,5 @@ async function main() {
     });
 
 }
+
 main();

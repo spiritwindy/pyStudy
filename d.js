@@ -1,7 +1,7 @@
 import { tensor3d, tensor2d, train, dispose, loadLayersModel } from '@tensorflow/tfjs';
 import { mkdir, rm } from 'fs/promises';
 import { TimeSeriesTransformer, CONFIG } from './TimeSeriesTransformer.js';
-import { fetchEarthquakes } from "./fetchData.js";
+import { fetchEarthquakes } from "./earthquake.js";
 import { normalizeValues, normalizeNextEventTarget, decodeNextEventPrediction } from "./time.js";
 CONFIG.OUTPUT_DIM = 4;
 CONFIG.EPOCHS = 20;

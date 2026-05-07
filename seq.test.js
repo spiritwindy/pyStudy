@@ -2,7 +2,7 @@
 import * as tf from '@tensorflow/tfjs';
 import { tensor3d, tensor2d, dispose, } from '@tensorflow/tfjs';
 import { normalizeValues, normalizeNextEventTarget, decodeNextEventPrediction } from "./time.js";
-import { fetchEarthquakes } from "./fetchData.js";
+import { fetchEarthquakes } from "./earthquake.js";
 let CONFIG = {
   OUTPUT_DIM: 4,
   SEQ_LENGTH: 24
@@ -45,12 +45,7 @@ async function predictFuture(model, X_val, steps = 30) {
 
 /**
  * 
- * @param { {
-    time: number;
-    latitude: any;
-    longitude: any;
-    magnitude: any;
-}[]} data 
+ * @param {{time: number;  latitude: any;  longitude: any;   magnitude: any;}[]} data 
  * @param {*} seqLength 
  * @returns 
  */

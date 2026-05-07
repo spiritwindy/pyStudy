@@ -1,47 +1,40 @@
-import {  Op,fn,col } from "sequelize";
-import { Earthquake } from "./sqlite.js"; // 引入定义的模型
+import moment from "moment";
+import { addData } from "./sqlite.js";
 
+const url = "https://earthquake.usgs.gov/fdsnws/event/1/query";
 
+async function getData(starttime) {
+    const params = {
+        format: "geojson",
+        starttime,
+        endtime: moment(starttime).add(1, "year").format("YYYY-MM-DD"),
+        minmagnitude: 4
+    };
 
-export async function fetchEarthquakes() {
     try {
-        // 查询所有地震数据并按时间排序
-        const rows = await Earthquake.findAll({
-            attributes: ["time", "latitude", "longitude", "magnitude"],
-            order: [["time", "ASC"]],
-            where: {
-                magnitude: {
-                    [Op.gte]: 6 // 最小震级为8.2
-                }
-            }
-        });
-        const data = rows.map(row => ({
-            time: new Date(row.time).getTime(), // 转成秒
-            latitude: row.latitude,
-            longitude: row.longitude,
-            magnitude: row.magnitude
+        const response = await fetch(url + "?" + new URLSearchParams(params));
+        const data = await response.json();
+        const datas = data.features.map((feature) => ({
+            magnitude: feature.properties.mag,
+            time: moment(new Date(feature.properties.time)).format("YYYY-MM-DD HH:mm:ss"),
+            latitude: feature.geometry.coordinates[1],
+            longitude: feature.geometry.coordinates[0]
         }));
-        console.log(rows.length, "条地震数据:"); // 打印查询结果
-        return data;
+
+        await Promise.all(datas.map((value) => addData(value)));
     } catch (error) {
-        console.error("查询失败:", error.message);
+        console.log(params, error.message);
     }
 }
 
-export async function getRang(params) {
-            // 查询范围
-    const range = await Earthquake.findAll({
-        attributes: [
-            [fn("MIN", col("time")), "minTime"],
-            [fn("MAX", col("time")), "maxTime"],
-            [fn("MIN", col("latitude")), "minLatitude"],
-            [fn("MAX", col("latitude")), "maxLatitude"],
-            [fn("MIN", col("longitude")), "minLongitude"],
-            [fn("MAX", col("longitude")), "maxLongitude"],
-            [fn("MIN", col("magnitude")), "minMagnitude"],
-            [fn("MAX", col("magnitude")), "maxMagnitude"]
-        ]
-    });
-    console.log(range)
+async function getAllData() {
+    let starttime = "1901-01-01";
+    const endtime = moment("2025-01-01").format("YYYY-MM-DD");
+
+    while (starttime < endtime) {
+        await getData(starttime);
+        starttime = moment(starttime).add(1, "year").format("YYYY-MM-DD");
+    }
 }
 
+getAllData();

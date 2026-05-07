@@ -1,48 +1,25 @@
-let url = "https://earthquake.usgs.gov/fdsnws/event/1/query"
-let moment = require("moment");
-let fs = require("fs");
-const { addData } = require("./sqlite");
+import { queryEarthquakes, queryRange } from "./sqlite.js";
 
-async function getData(starttime) {
-    let params = {
-        "format": "geojson",
-        starttime,
-        "endtime": moment(starttime).add(1, 'year').format("YYYY-MM-DD"), // moment 加一天
-        "minmagnitude": 4,
-    }
-    let json = {};
+export async function fetchEarthquakes() {
     try {
-        var d = await fetch(url + "?" + new URLSearchParams(params));
-        // .then(response => response.json())
-        var data = await d.json()
+        const rows = queryEarthquakes(6);
+        const data = rows.map((row) => ({
+            time: new Date(row.time).getTime(),
+            latitude: row.latitude,
+            longitude: row.longitude,
+            magnitude: row.magnitude
+        }));
+
+        console.log(rows.length, "条地震数据");
+        return data;
     } catch (error) {
-        console.log(params, error.message);
-    }
-
-    let features = data.features;
-    let datas = [];
-    let earthquakes = features.map(feature => {
-        datas.push({
-            "magnitude": feature.properties.mag,
-            "time": moment(new Date(feature.properties.time)).format("YYYY-MM-DD HH:mm:ss"),
-            "latitude": feature.geometry.coordinates[1],
-            "longitude": feature.geometry.coordinates[0]
-        })
-    });
-    let proms = []
-
-    datas.forEach(v=>{
-        let p = addData(v)
-        proms.push(p)
-    })
-    await Promise.all(proms)
-}
-async function getAllData() {
-    let starttime = "1901-01-01"
-    let endtime = moment("2025-01-01").format("YYYY-MM-DD")
-    while (starttime < endtime) {
-        await getData(starttime)
-        starttime = moment(starttime).add(1, 'year').format("YYYY-MM-DD")
+        console.error("查询失败:", error.message);
     }
 }
-getAllData();
+
+export async function getRang() {
+    const range = queryRange();
+    console.log(range);
+    return range;
+}
+fetchEarthquakes()

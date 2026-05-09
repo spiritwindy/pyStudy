@@ -2,6 +2,17 @@
 // 继承自 tf.layers.Layer，支持自定义头数、key/value 维度和可选遮罩
 import * as tf from '@tensorflow/tfjs';
 export class MultiHeadAttention extends tf.layers.Layer {
+  projectInput(input, kernel, bias, outputDim) {
+    const inputShape = input.shape;
+    const featureDim = inputShape[inputShape.length - 1];
+    const flatInput = tf.reshape(input, [-1, featureDim]);
+    let projected = tf.matMul(flatInput, kernel.read());
+    if (this.useBias && bias) {
+      projected = tf.add(projected, bias.read());
+    }
+    return tf.reshape(projected, inputShape.slice(0, -1).concat([outputDim]));
+  }
+
   /**
    * @param {Object} config
    * @param {number} config.numHeads - 注意力头数
@@ -86,16 +97,12 @@ export class MultiHeadAttention extends tf.layers.Layer {
       q = k = v = inputs;
     }
     const mask = kwargs && kwargs.mask;
+    const outputDim = q.shape[q.shape.length - 1];
 
     // 线性投影
-    q = tf.matMul(q, this.qKernel.read());
-    k = tf.matMul(k, this.kKernel.read());
-    v = tf.matMul(v, this.vKernel.read());
-    if (this.useBias) {
-      q = tf.add(q, this.qBias.read());
-      k = tf.add(k, this.kBias.read());
-      v = tf.add(v, this.vBias.read());
-    }
+    q = this.projectInput(q, this.qKernel, this.qBias, this.numHeads * this.keyDim);
+    k = this.projectInput(k, this.kKernel, this.kBias, this.numHeads * this.keyDim);
+    v = this.projectInput(v, this.vKernel, this.vBias, this.numHeads * this.valueDim);
 
     // 获取尺寸信息
     const batchSize = q.shape[0];
@@ -136,10 +143,7 @@ export class MultiHeadAttention extends tf.layers.Layer {
     context = tf.reshape(context, [batchSize, seqLenQ, concatDim]);
 
     // 输出投影
-    let output = tf.matMul(context, this.oKernel.read());
-    if (this.useBias) {
-      output = tf.add(output, this.oBias.read());
-    }
+    let output = this.projectInput(context, this.oKernel, this.oBias, outputDim);
     return output;//[4,10,512]
   }
 

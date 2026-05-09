@@ -7,7 +7,7 @@ import {MultiHeadAttention} from "./multi.js"
   const key = tf.input({ shape: [10, dim] });
   const val = tf.input({ shape: [10, dim] });
 
-  const attn = new MultiHeadAttention({ numHeads: 8, keyDim: 16 });
+  const attn = new MultiHeadAttention({ numHeads: 8, keyDim: 64 });
   const output = attn.apply([input, key, val]);
   const model = tf.model({ inputs: [input, key, val], outputs: output });
   model.summary();
@@ -17,6 +17,6 @@ import {MultiHeadAttention} from "./multi.js"
   const kData = tf.randomNormal([2, 10, dim]);
   const vData = tf.randomNormal([2, 10, dim]);
   const y = model.predict([qData, kData, vData]);
-  // y.print(true);
+  y.print(true);
   console.log(y.shape);
 })();

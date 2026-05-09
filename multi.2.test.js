@@ -56,7 +56,7 @@ async function test1(params) {
   await model.fit(x, y, {
     epochs: 5,
     batchSize: 4,
-    callbacks: tf.callbacks.earlyStopping({ patience: 2 })
+    callbacks: tf.callbacks.earlyStopping({ monitor: 'loss', patience: 2 })
   });
 
   console.log('Done training.');

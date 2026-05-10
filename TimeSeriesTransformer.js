@@ -29,7 +29,7 @@ export class TimeSeriesTransformer {
     this.decoder = tf.sequential({
       layers: [
         tf.layers.dense({ units: 16, activation: 'relu', inputShape: [CONFIG.D_MODEL] }),
-        tf.layers.dense({ units: CONFIG.OUTPUT_DIM })  // 输出维度改为 CONFIG.OUTPUT_DIM
+        tf.layers.dense({ units: CONFIG.OUTPUT_DIM, activation: 'sigmoid' })  // 输出维度改为 CONFIG.OUTPUT_DIM
       ]
     });
    

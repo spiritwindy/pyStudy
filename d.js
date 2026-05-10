@@ -1,8 +1,8 @@
-import { tensor3d, tensor2d, train, dispose, tensor ,loadLayersModel} from '@tensorflow/tfjs';
-import { mkdir, writeFile,readFile } from 'fs/promises';
+import { tensor3d, tensor2d, train, dispose, loadLayersModel } from '@tensorflow/tfjs';
+import { mkdir, rm } from 'fs/promises';
 import { TimeSeriesTransformer, CONFIG } from './TimeSeriesTransformer.js';
 import { fetchEarthquakes } from "./fetchData.js";
-import { normalizeValues,denormalizeValues } from "./time.js";
+import { normalizeValues, normalizeNextEventTarget, decodeNextEventPrediction } from "./time.js";
 CONFIG.OUTPUT_DIM = 4;
 CONFIG.EPOCHS = 20;
 import "tfjs-node-save";
@@ -28,8 +28,9 @@ function createDataset(data, seqLength) {
       // 每个时间步包装为一个数组，创建二维结构
       const seq = data.slice(i, i + seqLength).map(val => normalizeValues([val.time,val.latitude,val.longitude,val.magnitude]));//val.latitude,val.longitude,val.magnitude));//val.latitude,val.longitude,val.magnitude
       X.push(seq); // [seqLength,4]
-      let val = data[i + seqLength]
-      y.push(normalizeValues([val.time,val.latitude,val.longitude,val.magnitude]));
+      let last = data[i + seqLength - 1];
+      let val = data[i + seqLength];
+      y.push(normalizeNextEventTarget(last, val));
     }
     
     return {
@@ -59,8 +60,12 @@ async function main() {
 
   const y_train = y.slice([0, 0], [splitIdx, CONFIG.OUTPUT_DIM]);
   const y_val = y.slice([splitIdx, 0], [-1, CONFIG.OUTPUT_DIM]);
+  const X_val_last = X_val
+    .slice([0, CONFIG.SEQ_LENGTH - 1, 0], [-1, 1, CONFIG.OUTPUT_DIM])
+    .squeeze([1]);
   console.log("y_train",y_train.shape)
   console.log("y_val",y_val.shape)
+  console.log("X_val_last", X_val_last.shape)
   // 初始化模型
   const model = new TimeSeriesTransformer();
   // await loadModelWeights(model); // 加载模型权重
@@ -70,20 +75,23 @@ async function main() {
 
   /**
    * 
+   * @param {import('@tensorflow/tfjs').Tensor2D} lastSteps
    * @param {import('@tensorflow/tfjs').Tensor2D} yTrue 
    * @param {import('@tensorflow/tfjs').Tensor2D} yPred 
    * @returns 
    */
-  async function showDiff(yTrue, yPred) {
+  async function showDiff(lastSteps, yTrue, yPred) {
+    const lastStepArray = await lastSteps.array();
     const predArray = await yPred.array(); // 转为普通数组
     const yTrueArray = await yTrue.array(); // 转为普通数组
 
     const valPredArray = predArray;
-    for (var t = 0; t < valPredArray.length; t++) {
+    for (var t = 0; t < Math.min(valPredArray.length, 5); t++) {
       let ele = valPredArray[t];
       let eleTrue = yTrueArray[t];
-      let resTure = denormalizeValues(eleTrue);
-      let res = denormalizeValues(ele);
+      let lastStep = lastStepArray[t];
+      let resTure = decodeNextEventPrediction(eleTrue, lastStep);
+      let res = decodeNextEventPrediction(ele, lastStep);
       console.log("-----------")
       console.log("pre",new Date(res[0]).toLocaleString(), res[1], res[2], res[3])
       console.log("actual", new Date(resTure[0]).toLocaleString(), resTure[1], resTure[2], resTure[3])
@@ -101,24 +109,27 @@ async function main() {
     for (let i = 0; i <= X_train.shape[0] - CONFIG.BATCH_SIZE; i += CONFIG.BATCH_SIZE) {
       const batchX = X_train.slice([i, 0, 0], [CONFIG.BATCH_SIZE, CONFIG.SEQ_LENGTH, CONFIG.OUTPUT_DIM]);
       const batchY = y_train.slice([i, 0], [CONFIG.BATCH_SIZE, CONFIG.OUTPUT_DIM]);
+      const batchLastStep = batchX
+        .slice([0, CONFIG.SEQ_LENGTH - 1, 0], [CONFIG.BATCH_SIZE, 1, CONFIG.OUTPUT_DIM])
+        .squeeze([1]);
       // console.log("batchX",batchX.shape)
       const loss = optimizer.minimize(() => {
        
-        const pred = model.predict(batchX);
+        const pred = model.decoder.apply(batchLastStep);
         
         return lossFn(batchY, pred);
       }, true);
     
       totalLoss += loss.dataSync()[0];
-      dispose([batchX, batchY, loss]);
+      dispose([batchX, batchY, batchLastStep, loss]);
     }
     console.log("优化完成>>>>>>>>>>>>>>>>>>>>>>>>")
     // 验证损失
-    const valPred = model.predict(X_val);
+    const valPred = model.decoder.predict(X_val_last);
     valPred.print();
     console.log(valPred.shape)
     const valLoss = lossFn(y_val, valPred).dataSync()[0];
-    await showDiff(y_val, valPred)
+    await showDiff(X_val_last, y_val, valPred)
     console.log(
       `Epoch ${epoch + 1}/${CONFIG.EPOCHS} | ` +
       `Train Loss: ${(totalLoss/(X_train.shape[0]/CONFIG.BATCH_SIZE)).toFixed(4)} | ` +
@@ -143,25 +154,27 @@ async function predictFuture(model, X_val, steps = 30) {
   let currentInput = X_val.slice([0, 0, 0], [1, CONFIG.SEQ_LENGTH, CONFIG.OUTPUT_DIM]); // 从验证集取一个初始输入
 
   for (let i = 0; i < steps; i++) {
-    const pred = model.predict(currentInput); // 预测下一步
+    const lastStep = currentInput
+      .slice([0, CONFIG.SEQ_LENGTH - 1, 0], [1, 1, CONFIG.OUTPUT_DIM])
+      .squeeze([1]);
+    const pred = model.decoder.predict(lastStep); // 预测下一步
     const predArray = await pred.array(); // 转为普通数组
-    
-    const valPredArray = predArray;
-    for(var t=0;t<valPredArray.length;t++){
-      let ele =valPredArray[t];
-      let res =denormalizeValues(ele);
-      console.log(new Date(res[0] ).toLocaleString() ,res[1],res[2],res[3])
-    }
+    const lastStepArray = await lastStep.array();
+    const res = decodeNextEventPrediction(predArray[0], lastStepArray[0]);
+    console.log(new Date(res[0]).toLocaleString(), res[1], res[2], res[3])
 
-    predictions.push(predArray[0]); // 保存预测结果
+    predictions.push(res); // 保存预测结果
 
     // 更新输入，将预测结果作为下一次的输入
+    const oldInput = currentInput;
     const nextInput = currentInput.slice([0, 1, 0], [1, CONFIG.SEQ_LENGTH - 1, CONFIG.OUTPUT_DIM]);
-    currentInput = nextInput.concat(pred.reshape([1, 1, CONFIG.OUTPUT_DIM]), 1); // 拼接新的预测值
+    const nextEvent = tensor3d([[normalizeValues([res[0], res[1], res[2], res[3]])]], [1, 1, CONFIG.OUTPUT_DIM]);
+    currentInput = nextInput.concat(nextEvent, 1); // 拼接新的预测值
 
-    dispose([pred, nextInput]); // 释放内存
+    dispose([oldInput, pred, lastStep, nextInput, nextEvent]); // 释放内存
   }
 
+  dispose(currentInput);
   return predictions;
 }
 
@@ -174,6 +187,7 @@ async function predictFuture(model, X_val, steps = 30) {
 async function saveModel(model) {
 
   await mkdir('model', { recursive: true });
+  await rm('model/decoder', { recursive: true, force: true });
 
   let w = await model.decoder.save("file://./model/decoder")
 

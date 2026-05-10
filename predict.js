@@ -1,8 +1,8 @@
-const tf = require('@tensorflow/tfjs');
-const { TimeSeriesTransformer, CONFIG } = require('./TimeSeriesTransformer'); // 引入 TimeSeriesTransformer
-const {fetchEarthquakes} = require('./fetchData'); // 引入 fetchData
+import { tensor, train } from '@tensorflow/tfjs';
+import { TimeSeriesTransformer, CONFIG } from './TimeSeriesTransformer.js'; // 引入 TimeSeriesTransformer
+import { fetchEarthquakes } from './fetchData.js'; // 引入 fetchData
 
-require("tfjs-node-save");
+import "tfjs-node-save";
 function createSequences(data, seqLength = CONFIG.SEQ_LENGTH) {
     const sequences = [];
     const labels = [];
@@ -21,14 +21,14 @@ async function trainAndPredict() {
     let data = await fetchEarthquakes();
     const { sequences, labels } = createSequences(data);
 
-    const xs = tf.tensor(sequences).reshape([-1, CONFIG.SEQ_LENGTH, 4]); // 4 个特征 (time, latitude, longitude, magnitude)
-    const ys = tf.tensor(labels);
+    const xs = tensor(sequences).reshape([-1, CONFIG.SEQ_LENGTH, 4]); // 4 个特征 (time, latitude, longitude, magnitude)
+    const ys = tensor(labels);
 
     const transformer = new TimeSeriesTransformer();
 
     // 编译模型
     transformer.decoder.compile({
-        optimizer: tf.train.adam(CONFIG.LR),
+        optimizer: train.adam(CONFIG.LR),
         loss: 'meanSquaredError'
     });
 

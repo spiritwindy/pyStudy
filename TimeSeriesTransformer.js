@@ -13,7 +13,7 @@ export const CONFIG = {
 };
 import tf from '@tensorflow/tfjs';
 
-import { MultiHeadAttention } from './multihead.js';
+import { MultiHeadAttention } from './multi.js';
 
 export class TimeSeriesTransformer {
   constructor() {

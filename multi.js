@@ -73,7 +73,20 @@ export class MultiHeadAttention extends tf.layers.Layer {
    * @param {string|tf.initializer.Initializer} [config.kernelInitializer] - 权重初始化方法或初始化器实例
    */
   constructor(config) {
-    super(config);
+    const layerConfig = config && typeof config === 'object' ? config : {};
+    super(layerConfig);
+    if (!config || typeof config !== 'object') {
+      throw new Error('MultiHeadAttention config must be an object, e.g. { numHeads, keyDim }.');
+    }
+    if (!Number.isInteger(config.numHeads) || config.numHeads <= 0) {
+      throw new Error('MultiHeadAttention numHeads must be a positive integer.');
+    }
+    if (!Number.isInteger(config.keyDim) || config.keyDim <= 0) {
+      throw new Error('MultiHeadAttention keyDim must be a positive integer.');
+    }
+    if (config.valueDim != null && (!Number.isInteger(config.valueDim) || config.valueDim <= 0)) {
+      throw new Error('MultiHeadAttention valueDim must be a positive integer when provided.');
+    }
     this.numHeads = config.numHeads;
     this.keyDim = config.keyDim;
     this.valueDim = config.valueDim || config.keyDim;

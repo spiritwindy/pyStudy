@@ -1,5 +1,7 @@
 // Transformer时间序列模型
+import tf from '@tensorflow/tfjs';
 
+import { MultiHeadAttention } from './multi.js';
 export const CONFIG = {
   SEQ_LENGTH: 24,    // 输入序列长度
   D_MODEL: 4,       // 模型维度
@@ -11,14 +13,15 @@ export const CONFIG = {
   INPUT_DIM: 4,      // 输入特征维度
   OUTPUT_DIM: 4      // 输出特征维度
 };
-import tf from '@tensorflow/tfjs';
 
-import { MultiHeadAttention } from './multi.js';
 
 export class TimeSeriesTransformer {
   constructor() {
     this.encoderLayers = Array(CONFIG.N_LAYERS).fill().map(() =>
-      new MultiHeadAttention(CONFIG.N_HEADS, CONFIG.D_MODEL / CONFIG.N_HEADS)
+      new MultiHeadAttention({
+        numHeads: CONFIG.N_HEADS,
+        keyDim: CONFIG.D_MODEL / CONFIG.N_HEADS
+      })
     );
 
     this.positionEncoding = this.buildPositionEncoding();
